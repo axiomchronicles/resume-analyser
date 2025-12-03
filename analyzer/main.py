@@ -1,5 +1,5 @@
-from analyzer.utils import extract_texts
-from analyzer.helpers import (
+from utils import extract_texts
+from helpers import (
     clean_text,
     contains_metric,
     cosine_similarity,

@@ -1,7 +1,7 @@
 import re
 import typing
 
-from analyzer.config import ACTION_VERBS, EXPECTED_SECTIONS, WEAK_PHRASES
+from config import ACTION_VERBS, EXPECTED_SECTIONS, WEAK_PHRASES
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
