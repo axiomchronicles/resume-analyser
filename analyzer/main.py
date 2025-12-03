@@ -15,14 +15,15 @@ from pprint import pprint
 
 def main():
     data = extract_texts("../PawanKumar_Resume.pdf")
+    # print(type(data))
 
     jd_text = "AI&ML Engineer"
 
     cleaned_text = clean_text(data)
     bullets = extract_bullets(cleaned_text)
 
-    section_score, section_found = coverage_score(clean_text)
-    kw_score = keyword_match_score(clean_text, jd_text)
+    section_score, section_found = coverage_score(cleaned_text)
+    kw_score = keyword_match_score(cleaned_text, jd_text)
 
     action_score = (
         sum(starts_with_action_verb(b) for b in bullets) / len(bullets)

@@ -7,6 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 def clean_text(text: str) -> str:
+    # print(type(text))
+    # print(type(text))
     return re.sub(r"\s+", " ", text).strip()
 
 def split_into_sentences(text: str) -> typing.List[str]:
