@@ -6,6 +6,10 @@ from config import ACTION_VERBS, EXPECTED_SECTIONS, WEAK_PHRASES
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+
+BULLET_CHARS = "•‣▪●◦–—·*+-"
+
+
 def clean_text(text: str) -> str:
     # print(type(text))
     # print(type(text))
@@ -16,14 +20,22 @@ def split_into_sentences(text: str) -> typing.List[str]:
     return [s.strip() for s in sents if s.strip()]
 
 def extract_bullets(text: str) -> typing.List[str]:
-    bullets = []
-    for line in text.splitlines():
-        s = line.strip()
-        if s.startswith(("-", "•", "*")):
-            bullets.append(s.lstrip("-•*").strip())
+    # Matches: bullet symbol + space + text, until the next bullet or end
+    pattern = re.compile(
+        r"""
+        (?:^| )                # start or space
+        [•\u2022\u2023\u25CF\u25AA\u25E6\u00B7]   # bullet-like characters
+        \s*
+        (?P<item>[^•\u2022\u2023\u25CF\u25AA\u25E6\u00B7]+)
+        """,
+        re.VERBOSE
+    )
 
-        return bullets
-    
+    bullets = []
+    for m in pattern.finditer(text):
+        bullets.append(m.group("item").strip())
+
+    return bullets
 
 def contains_metric(text: str) -> bool:
     return bool(re.search(r"(\d+[%]?)|(\$\d+)", text))
@@ -54,20 +66,49 @@ def keyword_match_score(resume: str, jd: str) -> float:
     return float(cosine_similarity(tf[0:1], tf[1:2])[0][0])
 
 
+from dataclasses import dataclass
+
+
+@dataclass
+class WeakPhraseMatch:
+    phrase: str
+    start: int
+    end: int
+    snippet: str
+
+
+def compile_phrase_patterns(phrases):
+    patterns = []
+
+    for phrase in phrases:
+        escaped = re.escape(phrase)
+        flexible = re.sub(r"\\ ", r"\\s+", escaped)  # allow variable whitespace
+
+        pattern = re.compile(
+            rf"\b({flexible})\b",
+            re.IGNORECASE
+        )
+        patterns.append((phrase, pattern))
+
+    return patterns
+
+
 def weak_phrases(text: str) -> typing.List[typing.Dict]:
-    low = text.lower()
-    out =[]
+    patterns = compile_phrase_patterns(WEAK_PHRASES)
+    out: typing.List[typing.Dict] = []
 
-    for phrase in WEAK_PHRASES:
-        start = 0
-        while True:
-            idx = low.find(phrase, start)
-            if idx == -1:
-                break
+    for raw_phrase, pattern in patterns:
+        for match in pattern.finditer(text):
+            start, end = match.span()
 
-            out.append(
-                {"phrase": phrase, "start": idx, "end": idx + len(phrase)}
-            )
-            start = idx + len(phrase)
+            # You can adjust snippet window if you want more context
+            snippet = text[max(0, start - 30): min(len(text), end + 30)]
+
+            out.append({
+                "phrase": raw_phrase,
+                "start": start,
+                "end": end,
+                "snippet": snippet
+            })
 
     return out

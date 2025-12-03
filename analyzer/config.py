@@ -1,5 +1,4 @@
 
-
 WEAK_PHRASES = [
     "responsible for", "worked on", "helped with", "assisted with",
     "participated in", "various tasks", "duties included", "hard-working",

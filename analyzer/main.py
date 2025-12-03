@@ -1,4 +1,4 @@
-from utils import extract_texts
+from utils import extract_texts, highlight_pdf
 from helpers import (
     clean_text,
     contains_metric,
@@ -14,13 +14,15 @@ from helpers import (
 from pprint import pprint
 
 def main():
-    data = extract_texts("../PawanKumar_Resume.pdf")
+    data = extract_texts("./functionalsample.pdf")
     # print(type(data))
 
     jd_text = "AI&ML Engineer"
 
     cleaned_text = clean_text(data)
+    # print(cleaned_text)
     bullets = extract_bullets(cleaned_text)
+    print(bullets)
 
     section_score, section_found = coverage_score(cleaned_text)
     kw_score = keyword_match_score(cleaned_text, jd_text)
@@ -52,6 +54,8 @@ def main():
         metric_score * 0.15 +
         length_score * 0.15
     ) * 100
+
+    highlight_pdf("./functionalsample.pdf", "_higlighted.pdf", weak_phrases(cleaned_text), bullets)
 
     return {
         "final_score": round(final, 1),
