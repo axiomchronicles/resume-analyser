@@ -11,6 +11,21 @@ An end‑to‑end **AI Resume Analyzer** that:
 - Exposes a clean **API** used by an interactive **web UI** (Tailwind + Framer Motion)
 
 ---
+## Screenshots
+
+<p align="center">
+  <img src="assets/01.png" alt="Screenshot 1" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/02.png" alt="Screenshot 2" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/03.png" alt="Screenshot 3" width="700"/>
+</p>
+
+
 
 ## 📁 Project Structure
 
