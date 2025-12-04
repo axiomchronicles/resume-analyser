@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Optional, Tuple, Any
 
 from helpers import (
@@ -10,7 +10,15 @@ from helpers import (
     keyword_match_score,
     starts_with_action_verb,
     contains_metric,
+    bullet_quality_stats,
+    readability_scores,
+    passive_voice_ratio,
+    first_person_ratio,
+    estimate_experience_years,
+    skill_coverage_score,
 )
+
+
 @dataclass(frozen=True)
 class ATSWeights:
     section: float = 0.20
@@ -72,8 +80,13 @@ class ATSScores:
     bullets_count: int
     section_found: Dict[str, bool]
     bullets: List[str]
-
     explanation: Optional[Dict[str, Any]] = None
+    readability: Dict[str, float] = field(default_factory=dict)
+    bullet_quality: Dict[str, float] = field(default_factory=dict)
+    passive_voice_ratio: float = 0.0
+    first_person_ratio: float = 0.0
+    estimated_experience_years: float = 0.0
+    skill_coverage: float = 0.0
 
     def to_dict(self, include_explanation: bool = True) -> Dict[str, Any]:
         data = asdict(self)
@@ -116,8 +129,8 @@ def _compute_bullet_based_scores(
         "total_bullets": total_bullets,
         "action_bullets": sum(action_flags),
         "metric_bullets": sum(metric_flags),
-        "action_flags": action_flags,  
-        "metric_flags": metric_flags,  
+        "action_flags": action_flags,
+        "metric_flags": metric_flags,
     }
 
     return action_score, metric_score, explanation
@@ -128,6 +141,7 @@ def compute_ats_scores(
     jd_text: str = "",
     config: Optional[ATSConfig] = None,
     include_explanation: bool = False,
+    required_skills: Optional[List[str]] = None,
 ) -> Dict:
     cfg = config or ATSConfig()
     weights = cfg.weights.normalized()
@@ -145,6 +159,17 @@ def compute_ats_scores(
         cfg.bullet_fallbacks,
     )
     length_score_raw = _compute_length_score(word_count, cfg.length)
+
+    readability = readability_scores(cleaned_resume)
+    bullet_quality = bullet_quality_stats(bullets)
+    pv_ratio = passive_voice_ratio(cleaned_resume)
+    fp_ratio = first_person_ratio(cleaned_resume)
+    exp_years = estimate_experience_years(cleaned_resume)
+    skill_cov = (
+        skill_coverage_score(cleaned_resume, required_skills or [])
+        if required_skills
+        else 0.0
+    )
 
     final_raw = (
         section_score_raw * weights.section +
@@ -169,6 +194,12 @@ def compute_ats_scores(
             },
             "length_config": asdict(cfg.length),
             "bullet_analysis": bullets_explanation,
+            "readability": readability,
+            "bullet_quality": bullet_quality,
+            "passive_voice_ratio": pv_ratio,
+            "first_person_ratio": fp_ratio,
+            "estimated_experience_years": exp_years,
+            "skill_coverage": skill_cov,
         }
 
     scores = ATSScores(
@@ -183,6 +214,12 @@ def compute_ats_scores(
         section_found=section_found,
         bullets=bullets,
         explanation=explanation,
+        readability=readability,
+        bullet_quality=bullet_quality,
+        passive_voice_ratio=pv_ratio,
+        first_person_ratio=fp_ratio,
+        estimated_experience_years=exp_years,
+        skill_coverage=skill_cov,
     )
 
     return scores.to_dict(include_explanation=include_explanation)
