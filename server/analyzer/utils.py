@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from PyPDF2 import PdfReader
 import fitz
+from docx import Document
 
 from .helpers import starts_with_action_verb, contains_metric
 
@@ -56,6 +57,39 @@ def read_pdf(file_bytes: bytes, max_pages: Optional[int] = None) -> str:
 
     return "\n\n".join(pages)
 
+def read_docx(file_bytes: bytes) -> str:
+    if not file_bytes:
+        return ""
+
+
+    try:
+        doc = Document(io.BytesIO(file_bytes))
+    except Exception:
+        return ""
+
+
+    paragraphs: List[str] = []
+
+
+    for paragraph in doc.paragraphs:
+        text = paragraph.text.strip()
+        if text:
+            paragraphs.append(text)
+
+
+    for table in doc.tables:
+        table_text: List[str] = []
+        for row in table.rows:
+            row_text = " | ".join(cell.text.strip() for cell in row.cells)
+            if row_text.strip():
+                table_text.append(row_text)
+        
+        if table_text:
+            paragraphs.append("\n".join(table_text))
+
+
+    return "\n\n".join(paragraphs)
+
 
 def read_text(file_bytes: bytes) -> str:
     if not file_bytes:
@@ -83,6 +117,9 @@ def extract_texts(path: str) -> str:
 
     if ext.endswith(".txt"):
         return read_text(data)
+    
+    if ext.endswith(".docx"):
+        return read_docx(data)
 
     raise ValueError(f"File type not supported for path: {path!r}")
 

@@ -5,8 +5,10 @@
     <title>{% block title %}Resume e-Filing 2.0{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
 
     <!-- Tailwind config for light, portal-style theme -->
     <script>
@@ -41,6 +43,7 @@
       }
     </script>
 
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,10 +52,16 @@
       rel="stylesheet"
     >
 
+
     <!-- React + ReactDOM + Framer Motion -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/framer-motion/dist/framer-motion.umd.js" crossorigin></script>
+
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0"></script>
+
 
     <style>
       body {
@@ -66,10 +75,12 @@
       }
     </style>
 
+
     {% block head %}{% endblock %}
 </head>
 <body class="text-slate-800 min-h-screen">
 <div class="min-h-screen flex flex-col">
+
 
   <!-- Top Government / Portal bar -->
   <header class="border-b border-slate-200 bg-white">
@@ -96,6 +107,7 @@
         </div>
       </div>
 
+
       <!-- Primary nav (portal style) -->
       <nav class="flex flex-wrap items-center gap-1 text-xs font-medium mt-1 sm:mt-0">
         <a href=""
@@ -119,10 +131,12 @@
     </div>
   </header>
 
+
   <!-- Main content -->
   <main class="flex-1">
     {% block content %}{% endblock %}
   </main>
+
 
   <!-- Footer -->
   <footer id="help" class="border-t border-slate-200 mt-8 bg-white">
@@ -138,13 +152,16 @@
     </div>
   </footer>
 
+
   <div id="loading-overlay"
      class="hidden fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-[9999]">
   <div class="animate-spin h-12 w-12 border-4 border-brand-500 border-t-transparent rounded-full"></div>
 </div>
 
 
+
 </div>
+
 
 {% block scripts %}{% endblock %}
 </body>

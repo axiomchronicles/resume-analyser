@@ -9,16 +9,19 @@ from analyzer.utils import extract_texts, highlight_pdf
 from analyzer.helpers import clean_text, extract_bullets, weak_phrases
 from analyzer.compute import compute_ats_scores
 from analyzer.suggestions import generate_suggestions
+from analyzer.docx_highlighter import highlight_docx
 
 import pathlib
 import uuid
 import os
 
+from pprint import pprint
+
 
 class ApiResponsev1:
     def __init__(self):
-        self.output_path: pathlib.Path = pathlib.Path("temp")
-        self.UPLOAD_DIR = "temp"
+        self.output_path: pathlib.Path = pathlib.Path("tmp")
+        self.UPLOAD_DIR = "tmp"
 
     async def _process_file(self, file):
         file_id = str(uuid.uuid4())
@@ -53,12 +56,20 @@ class ApiResponsev1:
             ext = pathlib.Path(file_name).suffix  # ".pdf"
             file_out = f"{pathlib.Path(file_name).stem}_highlighted{ext}"
 
-            highlight_pdf(
-                input_path=file_path,
-                output_path=os.path.join(self.UPLOAD_DIR, file_out),
-                weak_phrases=weak_phrase,
-                bullets=bullets
-            )
+            if ext == ".pdf":
+                highlight_pdf(
+                    input_path=file_path,
+                    output_path=os.path.join(self.UPLOAD_DIR, file_out),
+                    weak_phrases=weak_phrase,
+                    bullets=bullets
+                )
+            elif ext == ".docx":
+                highlight_docx(
+                    input_path=file_path,
+                    output_path=os.path.join(self.UPLOAD_DIR, file_out),
+                    weak_phrases=weak_phrase,
+                    bullets=bullets
+                )
 
         return {
             "compute": compute,

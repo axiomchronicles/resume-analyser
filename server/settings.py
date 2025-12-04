@@ -54,6 +54,7 @@ STATICFILE_DIRS = [
 
 MEDIA_DIRS = [
     os.path.join(BASE_DIR, 'media'),
+    os.path.join(BASE_DIR, "tmp"),
 ]
 
 MEDIA_URL = "/media/"

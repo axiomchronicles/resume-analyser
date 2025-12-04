@@ -13,5 +13,5 @@ from .app import apiresponse
 #     2. Add a URL to ROUTER:  rule('/blog', include = include('blog.routing'))
 
 ROUTER = [
-    rule("/analyse", apiresponse.analyse, methods = ["GET", "POST"]),
+    rule("/analyze", apiresponse.analyse, methods = ["GET", "POST"]),
 ]

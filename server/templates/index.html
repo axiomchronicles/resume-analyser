@@ -3,7 +3,12 @@
 {% block title %}Resume e-Filing 2.0 · Analyzer{% endblock %}
 
 {% block content %}
-<section class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+<section class="max-w-7xl mx-auto px-4 py-6 md:py-8">
+  <!-- Global Alert -->
+  <div id="alert-container" class="mb-4 hidden">
+    <!-- Filled dynamically -->
+  </div>
+
   <!-- Hero + Quick actions -->
   <div class="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-5 items-stretch mb-6">
     <!-- Hero card -->
@@ -38,18 +43,14 @@
         <div class="shrink-0 bg-brand-50 border border-brand-100 rounded-2xl px-4 py-3 text-xs text-slate-700 w-full md:w-60">
           <div class="flex items-center justify-between mb-1">
             <span class="font-semibold text-slate-800">Last analysis</span>
-            {% if analysis %}
-              <span class="text-brand-700 font-semibold">{{ analysis.final_score }} / 100</span>
-            {% else %}
-              <span class="text-slate-500">No runs yet</span>
-            {% endif %}
+            <span id="last-score" class="text-slate-500">No runs yet</span>
           </div>
           <p class="text-[11px] mb-2 leading-relaxed">
             Scores combine structure, keyword alignment, action verbs, metrics, and length using a trained ATS model.
           </p>
           <div class="flex items-center justify-between text-[11px]">
             <span class="text-slate-500">Model version</span>
-            <span class="font-medium text-slate-800">{{ ml_model_version or "ATS-Linear+TFIDF v1.0" }}</span>
+            <span class="font-medium text-slate-800" id="ml-model-version">ATS-Linear+TFIDF v1.0</span>
           </div>
           <div class="mt-2 flex justify-end">
             <a href="#analyze"
@@ -84,11 +85,7 @@
             Generate synthetic resumes with scores to train or retrain the ATS ML model.
           </p>
         </div>
-        <button
-          type="button"
-          class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
-          onclick="alert('Hook this button to your synthetic dataset generator route.')"
-        >
+        <button type="button" class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700">
           Open generator
           <span>→</span>
         </button>
@@ -102,9 +99,7 @@
         </div>
         <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
           <span>Current model:</span>
-          <span class="font-medium text-slate-700">
-            {{ ml_model_version or "v1.0.0" }}
-          </span>
+          <span class="font-medium text-slate-700" id="ml-model-status">ATS-Linear+TFIDF v1.0</span>
         </div>
       </div>
       <div class="bg-white border border-slate-200 rounded-xl shadow-card/40 p-4 flex flex-col justify-between">
@@ -114,11 +109,7 @@
             Use the analyzer programmatically from your own apps or internal portals.
           </p>
         </div>
-        <button
-          type="button"
-          class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
-          onclick="alert('Link this to your API docs / Swagger UI.')"
-        >
+        <button type="button" class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700">
           View API docs
           <span>→</span>
         </button>
@@ -127,9 +118,9 @@
   </div>
 
   <!-- Analyzer form + results -->
-  <div id="analyze" class="grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)] gap-6 items-start">
+  <div id="analyze" class="grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)] gap-6 items-start">
     <!-- Left: Form -->
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6 sticky top-6">
       <div class="flex items-center justify-between mb-3">
         <div>
           <h2 class="text-sm font-semibold text-slate-900">Resume Submission</h2>
@@ -139,111 +130,136 @@
         </div>
         <div class="hidden md:flex flex-col items-end text-[11px] text-slate-500">
           <span>Status:</span>
-          {% if analysis %}
-            <span class="inline-flex items-center gap-1 text-emerald-600">
-              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              Last run completed
-            </span>
-          {% else %}
-            <span class="inline-flex items-center gap-1 text-slate-500">
-              <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-              Awaiting first run
-            </span>
-          {% endif %}
+          <span id="run-status" class="inline-flex items-center gap-1 text-slate-500">
+            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+            Awaiting first run
+          </span>
         </div>
       </div>
 
-      <form
-        enctype="multipart/form-data"
-        class="space-y-4"
-        id="analysis-form"
-      >
+      <form enctype="multipart/form-data" class="space-y-4" id="analysis-form">
         {% if csrf_token %}
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% endif %}
 
-        <!-- Resume text -->
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-slate-700">
-            Resume Text <span class="text-red-500">*</span>
-          </label>
-          <textarea
-            name="resume_text"
-            rows="10"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
-            placeholder="Paste your resume here..."
-          >{{ request.form.resume_text or "" }}</textarea>
-          <p class="text-[11px] text-slate-500">
-            If both text and file are provided, backend can choose which to prioritize (e.g. file text extraction).
-          </p>
-        </div>
+<!-- File upload + drag & drop -->
+<div class="space-y-2">
+  <label class="block text-xs font-medium text-slate-700">
+    Upload PDF
+    <span class="font-normal text-slate-500">(drag & drop or click)</span>
+  </label>
 
-        <!-- File upload + drag & drop -->
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-slate-700">
-            Or Upload PDF (drag & drop or click)
-          </label>
-          <div
-            id="dropzone"
-            class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 cursor-pointer transition-colors"
-          >
-            <div class="text-xs text-slate-600 pointer-events-none">
-              <div class="font-medium">Drop PDF here or click to browse</div>
-              <div id="file-name" class="text-[11px] text-slate-500 mt-0.5">
-                {% if uploaded_filename %}
-                  Selected: {{ uploaded_filename }}
-                {% else %}
-                  No file selected
-                {% endif %}
-              </div>
-            </div>
-            <div class="shrink-0 inline-flex items-center gap-1 text-[11px] text-brand-700 pointer-events-none">
-              Browse files
-              <span>📄</span>
-            </div>
-            <input
-              id="resume_file"
-              name="resume_file"
-              type="file"
-              accept=".pdf"
-              class="absolute inset-0 opacity-0 cursor-pointer"
-            >
-          </div>
-          <p class="text-[11px] text-slate-500">
-            Only text-based PDFs are supported for accurate extraction. Max size depends on server config.
-          </p>
-        </div>
+  <div
+    id="dropzone"
+    role="button"
+    tabindex="0"
+    class="relative group overflow-hidden flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-250 bg-slate-50/80 px-6 py-8 text-center cursor-pointer shadow-sm transition-all
+           hover:border-brand-400 hover:bg-brand-50/60 hover:shadow-md
+           focus-within:ring-2 focus-within:ring-brand-300 focus-within:border-brand-500"
+  >
+    <!-- Icon area -->
+    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200">
+      <span class="text-xl">📄</span>
+    </div>
 
-        <!-- Job description -->
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-slate-700">
-            Job Description (optional, improves keyword scoring)
-          </label>
-          <textarea
-            name="jd_text"
-            rows="6"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
-            placeholder="Paste the job description here if you want job-specific ATS scoring..."
-          >{{ request.form.jd_text or "" }}</textarea>
-        </div>
+    <!-- Main text -->
+    <div class="space-y-1 pointer-events-none">
+      <div class="text-sm font-semibold text-slate-800">
+        Drop your resume PDF here
+      </div>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">
+        Drag & drop your file, or click to browse from your device.
+      </p>
+    </div>
 
-        <!-- Advanced options (placeholder for future toggles) -->
+    <!-- File info chips -->
+    <div class="flex flex-wrap items-center justify-center gap-2 text-[11px] mt-1 pointer-events-none">
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5">
+        PDF only
+      </span>
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5">
+        Text-based for best results
+      </span>
+      <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5">
+        Max size depends on server
+      </span>
+    </div>
+
+    <!-- Selected file name -->
+    <div
+      id="file-name"
+      class="mt-2 text-[11px] text-slate-500 italic pointer-events-none max-w-xs truncate"
+    >
+      No file selected
+    </div>
+
+    <!-- Invisible File Input -->
+    <input
+      id="resume_file"
+      name="resume_file"
+      type="file"
+      accept=".pdf"
+      aria-label="Upload resume PDF"
+      class="absolute inset-0 opacity-0 cursor-pointer"
+    >
+  </div>
+
+  <p class="text-[11px] text-slate-500">
+    Only text-based PDFs are supported for accurate extraction.
+  </p>
+</div>
+
+
+<!-- OR Divider -->
+<div class="flex items-center my-6">
+  <div class="flex-grow h-px bg-slate-300"></div>
+  <span class="mx-3 text-xs font-medium text-slate-500">OR</span>
+  <div class="flex-grow h-px bg-slate-300"></div>
+</div>
+
+
+<!-- Resume text -->
+<div class="space-y-1.5">
+  <label class="block text-xs font-medium text-slate-700">
+    Resume Text <span class="text-red-500">*</span>
+  </label>
+  <textarea
+    name="resume_text"
+    rows="10"
+    class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
+    placeholder="Paste your resume here..."
+  ></textarea>
+  <p class="text-[11px] text-slate-500">
+    If both text and file are provided, backend can choose which to prioritize.
+  </p>
+</div>
+
+
+<!-- Job description -->
+<div class="space-y-1.5 mt-4">
+  <label class="block text-xs font-medium text-slate-700">
+    Job Description (optional, improves keyword scoring)
+  </label>
+  <textarea
+    name="jd_text"
+    rows="6"
+    class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
+    placeholder="Paste the job description here..."
+  ></textarea>
+</div>
+
+
+        <!-- Advanced options -->
         <details class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           <summary class="cursor-pointer select-none text-slate-700 font-medium">
             Advanced options
           </summary>
           <div class="mt-2 space-y-1">
             <p class="text-[11px]">
-              This section can be wired to options like: “Use ML model only”, “Use rule-based backup”, or “Show debug features”.
+              This section can be wired to options like: "Use ML model only", "Use rule-based backup", or "Show debug features".
             </p>
           </div>
         </details>
-
-        {% if error %}
-          <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {{ error }}
-          </div>
-        {% endif %}
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <p class="text-[11px] text-slate-500">
@@ -251,10 +267,11 @@
           </p>
           <button
             type="submit"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 text-white text-sm font-medium px-5 py-2 shadow-sm hover:bg-brand-700 active:scale-[0.98] transition-transform"
+            id="run-btn"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 text-white text-sm font-medium px-5 py-2 shadow-sm hover:bg-brand-700 active:scale-[0.98] transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Run Analysis
-            <span>↗</span>
+            <span id="run-btn-label">Run</span>
+            <span id="run-btn-icon">↗</span>
           </button>
         </div>
       </form>
@@ -262,42 +279,140 @@
 
     <!-- Right: Results, tabs, score widget -->
     <div class="space-y-4" id="ml-insights">
-      <!-- Score + tabs container -->
-      <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-900">ATS Score Overview</h2>
-            <p class="text-xs text-slate-500">
-              Estimated ATS-style compatibility score. Higher is better (0–100 scale).
-            </p>
+      <!-- MAIN SCORE CARD - Prominent & Color-Coded -->
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-6 md:p-8" id="score-card" style="display: none;">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <!-- Score Display -->
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">ATS Score</p>
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                <canvas id="gaugeChart" style="max-width: 120px; max-height: 120px;"></canvas>
+              </div>
+              <div>
+                <div id="main-score" class="text-5xl font-bold" style="color: #1d4ed8;">0</div>
+                <p class="text-sm text-slate-600 mt-1">/ 100</p>
+                <div id="score-status" class="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
+                  <!-- Dynamically set -->
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-2 text-[11px] text-slate-500">
-            <span>Model:</span>
-            <span class="font-medium text-slate-800">{{ ml_model_version or "ATS-Linear+TFIDF v1.0" }}</span>
+
+          <!-- Quick Metrics Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full" id="indicator-sections"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Sections</div>
+                <div id="score_sections" class="text-sm font-semibold text-slate-900">0%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full" id="indicator-keywords"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Keywords</div>
+                <div id="score_keywords" class="text-sm font-semibold text-slate-900">0%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full" id="indicator-action"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Action Verbs</div>
+                <div id="score_action" class="text-sm font-semibold text-slate-900">0%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full" id="indicator-metrics"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Metrics</div>
+                <div id="score_metrics" class="text-sm font-semibold text-slate-900">0%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full" id="indicator-length"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Length</div>
+                <div id="score_length" class="text-sm font-semibold text-slate-900">0%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+              <div class="h-3 w-3 rounded-full bg-slate-400"></div>
+              <div>
+                <div class="text-[11px] text-slate-500">Words</div>
+                <div id="score_words" class="text-sm font-semibold text-slate-900">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid - Hidden until analysis -->
+      <div id="charts-container" style="display: none;" class="grid lg:grid-cols-2 gap-4">
+        <!-- Radar Chart -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5">
+          <div class="text-xs font-semibold text-slate-700 mb-3">Score Metrics Breakdown</div>
+          <div class="relative h-72">
+            <canvas id="radarChart"></canvas>
           </div>
         </div>
 
-        <!-- React + Framer Motion widget mount -->
-        <div
-          id="score-widget-root"
-          data-score="{{ analysis.final_score if analysis else 0 }}"
-          class="border border-slate-200 rounded-xl bg-slate-50 px-3 py-3 mb-4"
-        >
-          <div id="score-widget" class="h-28 flex items-center justify-center"></div>
+        <!-- Bar Chart -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5">
+          <div class="text-xs font-semibold text-slate-700 mb-3">Components Comparison</div>
+          <div class="relative h-72">
+            <canvas id="barChart"></canvas>
+          </div>
         </div>
 
+        <!-- Line Chart -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 lg:col-span-2">
+          <div class="text-xs font-semibold text-slate-700 mb-3">Analysis History Trend</div>
+          <div class="relative h-64">
+            <canvas id="lineChart"></canvas>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-2">Chart updates as you run multiple analyses</p>
+        </div>
+
+        <!-- Doughnut Chart -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5">
+          <div class="text-xs font-semibold text-slate-700 mb-3">Overall Score Distribution</div>
+          <div class="relative h-72">
+            <canvas id="doughnutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Progress Stacked Chart -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5">
+          <div class="text-xs font-semibold text-slate-700 mb-3">Score Composition</div>
+          <div class="relative h-72">
+            <canvas id="stackedBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download Highlighted Resume Button -->
+<div id="download-btn-container" style="display: none;" class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6 mb-4">
+  <div class="flex justify-center">
+    <button 
+      id="download-resume-btn" 
+      class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded 
+             bg-blue-600 text-white text-sm font-medium 
+             hover:bg-blue-700 active:scale-[0.98] transition-transform"
+    >
+      <span>Download Highlighted Resume</span>
+    </button>
+  </div>
+</div>
+
+
+      <!-- Tabs Container - Hidden until analysis -->
+      <div id="tabs-container" style="display: none;" class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
         <!-- Tabs -->
         <div class="border-b border-slate-200 mb-3 flex flex-wrap text-xs font-medium" data-tabs>
           <button
             type="button"
             class="px-3 py-2 border-b-2 border-brand-600 text-brand-700"
-            data-tab-trigger="scores"
-          >
-            Scores
-          </button>
-          <button
-            type="button"
-            class="px-3 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700"
             data-tab-trigger="suggestions"
           >
             Suggestions
@@ -320,110 +435,37 @@
 
         <!-- Tab panels -->
         <div class="space-y-3">
-          <!-- Scores -->
-          <div data-tab-panel="scores">
-            {% if analysis %}
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Sections</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.section_score }}%</div>
-                </div>
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Keywords</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.keyword_score }}%</div>
-                </div>
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Action Verbs</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.action_score }}%</div>
-                </div>
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Metrics</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.metric_score }}%</div>
-                </div>
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Length</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.length_score }}%</div>
-                </div>
-                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                  <div class="text-slate-500">Word Count</div>
-                  <div class="text-sm font-semibold text-slate-900">{{ analysis.word_count }}</div>
-                </div>
-              </div>
-            {% else %}
-              <p class="text-xs text-slate-500">
-                Run an analysis to see detailed scores here.
-              </p>
-            {% endif %}
-          </div>
-
           <!-- Suggestions -->
-          <div data-tab-panel="suggestions" class="hidden">
-            {% if suggestions %}
-              <ul class="space-y-2 text-xs">
-                {% for suggestion in suggestions %}
-                  <li class="flex gap-2">
-                    <span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-brand-500"></span>
-                    <span>{{ suggestion }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="text-xs text-slate-500">
-                Suggestions will appear here after running an analysis.
-              </p>
-            {% endif %}
+          <div data-tab-panel="suggestions">
+            <ul id="suggestions-list" class="space-y-2 text-xs">
+              <li class="text-slate-500">Suggestions will appear here after running an analysis.</li>
+            </ul>
           </div>
 
           <!-- Sections & Bullets -->
           <div data-tab-panel="sections" class="hidden">
-            {% if analysis %}
-              <div class="mb-3">
-                <div class="text-xs font-semibold text-slate-700 mb-1">Detected Sections</div>
-                <div class="flex flex-wrap gap-1">
-                  {% for name, present in analysis.section_found.items() %}
-                    {% if present %}
-                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-700">
-                        {{ name }}
-                      </span>
-                    {% else %}
-                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-red-50 border border-red-200 text-[11px] text-red-700 line-through">
-                        {{ name }}
-                      </span>
-                    {% endif %}
-                  {% endfor %}
-                </div>
+            <div class="mb-3">
+              <div class="text-xs font-semibold text-slate-700 mb-1">Detected Sections</div>
+              <div id="detected-sections" class="flex flex-wrap gap-1 text-[11px]">
+                <span class="text-slate-500">Run an analysis to view detected sections.</span>
               </div>
+            </div>
 
-              <div class="text-xs font-semibold text-slate-700 mb-1">
-                Extracted Bullets ({{ analysis.bullets_count }})
-              </div>
-              <div class="max-h-56 overflow-auto pr-1 border border-slate-200 rounded-xl bg-slate-50">
-                <ul class="divide-y divide-slate-200 text-xs">
-                  {% for bullet in analysis.bullets %}
-                    <li class="px-3 py-2">
-                      {{ bullet }}
-                    </li>
-                  {% endfor %}
-                </ul>
-              </div>
+            <div class="text-xs font-semibold text-slate-700 mb-1">
+              Extracted Bullets (<span id="bullets-count">0</span>)
+            </div>
+            <div class="max-h-56 overflow-auto pr-1 border border-slate-200 rounded-xl bg-slate-50">
+              <ul id="bullets-list" class="divide-y divide-slate-200 text-xs">
+                <!-- Filled dynamically -->
+              </ul>
+            </div>
 
-              {% if weak_phrases %}
-                <div class="mt-3">
-                  <div class="text-xs font-semibold text-slate-700 mb-1">Weak Phrases</div>
-                  <div class="flex flex-wrap gap-1">
-                    {% for w in weak_phrases %}
-                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700">
-                        {{ w.phrase }}
-                      </span>
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endif %}
-            {% else %}
-              <p class="text-xs text-slate-500">
-                Run an analysis to view sections and extracted bullet points.
-              </p>
-            {% endif %}
+            <div class="mt-3" id="weak-phrases-wrapper" style="display:none;">
+              <div class="text-xs font-semibold text-slate-700 mb-1">Weak Phrases</div>
+              <div id="weak-phrases" class="flex flex-wrap gap-1">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
           </div>
 
           <!-- ML Details -->
@@ -444,32 +486,88 @@
       </div>
 
       <!-- System info / debug -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-4 text-[11px] text-slate-600">
+      <div id="system-info-container" style="display: none;" class="bg-white border border-slate-200 rounded-2xl p-4 text-[11px] text-slate-600">
         <div class="flex items-center justify-between mb-1">
           <span class="font-semibold text-slate-800">System Info</span>
           <span class="text-slate-400">Developer view</span>
         </div>
         <p>Last analysis status:
-          {% if analysis %}
-            <span class="text-emerald-600 font-medium">Completed</span>
-          {% else %}
-            <span class="text-slate-500">No run yet</span>
-          {% endif %}
+          <span id="last-status" class="text-slate-500">No run yet</span>
         </p>
-        {% if analysis %}
-          <p>Bullets parsed: <span class="font-medium">{{ analysis.bullets_count }}</span></p>
-          <p>Weak phrases flagged:
-            <span class="font-medium">{{ weak_phrases|length if weak_phrases else 0 }}</span>
-          </p>
-        {% endif %}
+        <p>Bullets parsed:
+          <span id="sys-bullets" class="font-medium">0</span>
+        </p>
+        <p>Weak phrases flagged:
+          <span id="sys-weak" class="font-medium">0</span>
+        </p>
+        <p class="mt-1 break-all">
+          Last highlighted file:
+          <span id="sys-file" class="font-mono text-[10px] text-slate-700">—</span>
+        </p>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl px-4 py-3 shadow-lg flex items-center gap-2 text-sm text-slate-700">
+    <svg class="animate-spin h-4 w-4 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 000 16v4l3.5-3.5L12 20v4a8 8 0 01-8-8z"></path>
+    </svg>
+    <span>Running analysis…</span>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script>
+// -------- Alert Helpers --------
+function showAlert(type, title, message) {
+  const container = document.getElementById("alert-container");
+  if (!container) return;
+
+  const baseClasses = "rounded-lg px-4 py-3 text-sm flex items-start gap-2 border";
+  let colorClasses = "";
+  if (type === "success") {
+    colorClasses = "bg-emerald-50 border-emerald-200 text-emerald-800";
+  } else if (type === "error") {
+    colorClasses = "bg-red-50 border-red-200 text-red-800";
+  } else {
+    colorClasses = "bg-slate-50 border-slate-200 text-slate-800";
+  }
+
+  container.innerHTML = `
+    <div class="${baseClasses} ${colorClasses}">
+      <div class="mt-[2px]">
+        ${type === "success" ? "✅" : type === "error" ? "⚠️" : "ℹ️"}
+      </div>
+      <div class="flex-1">
+        <div class="font-medium">${title}</div>
+        <div class="text-[13px] leading-snug">${message}</div>
+      </div>
+      <button
+        type="button"
+        class="ml-3 text-[11px] text-slate-500 hover:text-slate-700"
+        onclick="hideAlert()"
+      >
+        Dismiss
+      </button>
+    </div>
+  `;
+  container.classList.remove("hidden");
+}
+
+function hideAlert() {
+  const container = document.getElementById("alert-container");
+  if (container) {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+  }
+}
+
 // -------- Drag & Drop + File Input --------
 (function() {
   const fileInput = document.getElementById("resume_file");
@@ -482,12 +580,10 @@
     fileNameSpan.textContent = file ? "Selected: " + file.name : "No file selected";
   }
 
-  // When user chooses file manually
   fileInput.addEventListener("change", () => {
     setFileName(fileInput.files[0] || null);
   });
 
-  // Drag & Drop visual
   function highlight() {
     dropzone.classList.add("ring-2", "ring-brand-500", "bg-slate-100");
   }
@@ -524,117 +620,612 @@
   });
 })();
 
-
 // --------- Loading Spinner Utility ---------
 function showLoader() {
   const spinner = document.getElementById("loading-overlay");
-  spinner.classList.remove("hidden");
+  if (spinner) spinner.classList.remove("hidden");
 }
 function hideLoader() {
   const spinner = document.getElementById("loading-overlay");
-  spinner.classList.add("hidden");
+  if (spinner) spinner.classList.add("hidden");
 }
 
+// --------- Chart Configuration ---------
+let chartInstances = { gauge: null, radar: null, doughnut: null, bar: null, line: null, stacked: null };
+let analysisHistory = [];
+
+const chartConfig = {
+  brandPrimary: '#1d4ed8',
+  successColor: '#10b981',
+  warningColor: '#f59e0b',
+  dangerColor: '#ef4444'
+};
+
+// Color status indicator
+function getScoreColor(score) {
+  if (score < 40) return chartConfig.dangerColor;
+  if (score < 70) return '#3b82f6';
+  return chartConfig.successColor;
+}
+
+function getScoreStatus(score) {
+  if (score < 40) return { text: '❌ Critical', bg: 'bg-red-50', border: 'border-red-200', text_color: 'text-red-700' };
+  if (score < 70) return { text: '⚠️ Needs Work', bg: 'bg-blue-50', border: 'border-blue-200', text_color: 'text-blue-700' };
+  return { text: '✅ Excellent', bg: 'bg-emerald-50', border: 'border-emerald-200', text_color: 'text-emerald-700' };
+}
+
+// Update indicator dots
+function updateIndicators(scores) {
+  const indicators = {
+    'sections': scores.section_score || 0,
+    'keywords': scores.keyword_score || 0,
+    'action': scores.action_score || 0,
+    'metrics': scores.metric_score || 0,
+    'length': scores.length_score || 0
+  };
+
+  Object.entries(indicators).forEach(([key, value]) => {
+    const el = document.getElementById(`indicator-${key}`);
+    if (el) {
+      el.style.backgroundColor = getScoreColor(value);
+    }
+  });
+}
+
+// Gauge Chart
+function initGaugeChart(score) {
+  const ctx = document.getElementById('gaugeChart');
+  if (!ctx) return;
+  if (chartInstances.gauge) chartInstances.gauge.destroy();
+
+  chartInstances.gauge = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Score', 'Remaining'],
+      datasets: [{
+        data: [score, 100 - score],
+        backgroundColor: [getScoreColor(score), '#e5e7eb'],
+        borderColor: '#fff',
+        borderWidth: 3,
+        circumference: 180,
+        rotation: 270
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+}
+
+// Radar Chart
+function initRadarChart(scores) {
+  const ctx = document.getElementById('radarChart');
+  if (!ctx) return;
+  if (chartInstances.radar) chartInstances.radar.destroy();
+
+  chartInstances.radar = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Sections', 'Keywords', 'Action Verbs', 'Metrics', 'Length'],
+      datasets: [{
+        label: 'Your Resume Score',
+        data: [
+          scores.section_score || 0,
+          scores.keyword_score || 0,
+          scores.action_score || 0,
+          scores.metric_score || 0,
+          scores.length_score || 0
+        ],
+        borderColor: chartConfig.brandPrimary,
+        backgroundColor: 'rgba(29, 78, 216, 0.15)',
+        borderWidth: 2,
+        pointBackgroundColor: chartConfig.brandPrimary,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 12 }, padding: 15 } },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          callbacks: { label: c => c.label + ': ' + c.parsed.r.toFixed(1) + '%' }
+        }
+      },
+      scales: {
+        r: {
+          max: 100, min: 0,
+          ticks: { stepSize: 20, font: { size: 10 } },
+          grid: { color: 'rgba(148, 163, 184, 0.1)' }
+        }
+      }
+    }
+  });
+}
+
+// Bar Chart
+function initBarChart(scores) {
+  const ctx = document.getElementById('barChart');
+  if (!ctx) return;
+  if (chartInstances.bar) chartInstances.bar.destroy();
+
+  chartInstances.bar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Sections', 'Keywords', 'Action Verbs', 'Metrics', 'Length'],
+      datasets: [{
+        label: 'Score (%)',
+        data: [
+          scores.section_score || 0,
+          scores.keyword_score || 0,
+          scores.action_score || 0,
+          scores.metric_score || 0,
+          scores.length_score || 0
+        ],
+        backgroundColor: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
+        borderColor: chartConfig.brandPrimary,
+        borderWidth: 1,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          callbacks: { label: c => c.parsed.x.toFixed(1) + '%' }
+        }
+      },
+      scales: {
+        x: {
+          max: 100,
+          ticks: { callback: v => v + '%', font: { size: 10 } },
+          grid: { color: 'rgba(148, 163, 184, 0.1)' }
+        }
+      }
+    }
+  });
+}
+
+// Line Chart
+function initLineChart() {
+  const ctx = document.getElementById('lineChart');
+  if (!ctx) return;
+  if (chartInstances.line) chartInstances.line.destroy();
+
+  const labels = analysisHistory.length > 0 
+    ? analysisHistory.map((_, i) => `Run ${i + 1}`)
+    : ['No data yet'];
+  const scores = analysisHistory.length > 0
+    ? analysisHistory.map(r => r.final_score)
+    : [0];
+
+  chartInstances.line = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'ATS Score Over Time',
+        data: scores,
+        borderColor: chartConfig.brandPrimary,
+        backgroundColor: 'rgba(29, 78, 216, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: chartConfig.brandPrimary,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          callbacks: { label: c => 'Score: ' + c.parsed.y.toFixed(1) + ' / 100' }
+        }
+      },
+      scales: {
+        y: {
+          max: 100, min: 0,
+          ticks: { callback: v => v + ' pts', font: { size: 10 } },
+          grid: { color: 'rgba(148, 163, 184, 0.1)' }
+        }
+      }
+    }
+  });
+}
+
+// Doughnut Chart
+function initDoughnutChart(finalScore) {
+  const ctx = document.getElementById('doughnutChart');
+  if (!ctx) return;
+  if (chartInstances.doughnut) chartInstances.doughnut.destroy();
+
+  const remaining = 100 - finalScore;
+  const scoreColor = finalScore >= 75 ? chartConfig.successColor : 
+                     finalScore >= 50 ? chartConfig.warningColor : chartConfig.dangerColor;
+
+  chartInstances.doughnut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Your Score', 'Remaining'],
+      datasets: [{
+        data: [finalScore, remaining],
+        backgroundColor: [scoreColor, '#e5e7eb'],
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 12 }, padding: 15 } },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          callbacks: { label: c => c.label + ': ' + c.parsed.toFixed(1) + ' / 100' }
+        }
+      }
+    }
+  });
+}
+
+// Stacked Bar Chart
+function initStackedBarChart(scores) {
+  const ctx = document.getElementById('stackedBarChart');
+  if (!ctx) return;
+  if (chartInstances.stacked) chartInstances.stacked.destroy();
+
+  chartInstances.stacked = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Score Composition'],
+      datasets: [
+        {
+          label: 'Sections',
+          data: [scores.section_score || 0],
+          backgroundColor: '#3b82f6',
+          borderRadius: 8
+        },
+        {
+          label: 'Keywords',
+          data: [scores.keyword_score || 0],
+          backgroundColor: '#60a5fa',
+          borderRadius: 8
+        },
+        {
+          label: 'Action Verbs',
+          data: [scores.action_score || 0],
+          backgroundColor: '#93c5fd',
+          borderRadius: 8
+        },
+        {
+          label: 'Metrics',
+          data: [scores.metric_score || 0],
+          backgroundColor: '#bfdbfe',
+          borderRadius: 8
+        },
+        {
+          label: 'Length',
+          data: [scores.length_score || 0],
+          backgroundColor: '#dbeafe',
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true,
+          max: 100,
+          ticks: { callback: v => v + '%', font: { size: 10 } },
+          grid: { color: 'rgba(148, 163, 184, 0.1)' }
+        },
+        y: { stacked: true }
+      },
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          callbacks: { label: c => c.dataset.label + ': ' + c.parsed.x.toFixed(1) + '%' }
+        }
+      }
+    }
+  });
+}
 
 // --------- API Submission (AJAX) ---------
 (function () {
   const form = document.getElementById("analysis-form");
+  const runBtn = document.getElementById("run-btn");
+  const runBtnLabel = document.getElementById("run-btn-label");
+  const runBtnIcon = document.getElementById("run-btn-icon");
   if (!form) return;
 
   form.addEventListener("submit", async function (e) {
-    e.preventDefault(); // Prevent page reload
-    showLoader();
+    e.preventDefault();
+    hideAlert();
 
     const formData = new FormData(form);
 
     try {
-      const response = await fetch("/api/analyze", {
+      runBtn.disabled = true;
+      runBtnLabel.textContent = "Analyzing…";
+      runBtnIcon.textContent = "";
+      showLoader();
+
+      const response = await fetch("/api/v1/analyze", {
         method: "POST",
         body: formData
       });
 
-      hideLoader();
-
       if (!response.ok) {
-        alert("Server returned an error.");
+        hideLoader();
+        runBtn.disabled = false;
+        runBtnLabel.textContent = "Run Analysis";
+        runBtnIcon.textContent = "↗";
+        showAlert("error", "Analysis failed", "Server returned an error (" + response.status + "). Please try again.");
+        document.getElementById("run-status").innerHTML =
+          '<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span><span>Last run failed</span>';
+        document.getElementById("last-status").textContent = "Failed";
         return;
       }
 
       const data = await response.json();
+      hideLoader();
+      runBtn.disabled = false;
+      runBtnLabel.textContent = "Run Analysis";
+      runBtnIcon.textContent = "↗";
+
       renderResults(data);
+      showAlert("success", "Analysis complete", "Your resume was analyzed successfully. Scroll down to review the insights.");
 
     } catch (err) {
-      hideLoader();
-      alert("Something went wrong. Check your backend or network.");
       console.error(err);
+      hideLoader();
+      runBtn.disabled = false;
+      runBtnLabel.textContent = "Run Analysis";
+      runBtnIcon.textContent = "↗";
+      showAlert("error", "Network / server error", "Something went wrong while contacting the analysis API. Check your backend or network and try again.");
+      document.getElementById("run-status").innerHTML =
+        '<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span><span>Last run failed</span>';
+      document.getElementById("last-status").textContent = "Failed";
     }
   });
 })();
 
+// --------- Render Results into UI with Charts ---------
+function renderResults(apiData) {
+  const data = apiData || {};
+  const compute = data.compute || {};
+  const bullets = data.bullets || [];
+  const suggestions = data.suggestions || [];
+  const weakPhrases = data.weak_phrases || [];
+  const sectionFound = (compute.section_found) || {};
+  const wordCount = compute.word_count || 0;
+  const bulletsCount = compute.bullets_count || bullets.length || 0;
 
-// --------- Render Results into UI ---------
-function renderResults(data) {
-  // data = { final_score, analysis, suggestions, weak_phrases }
-  console.log("RESULTS:", data);
+  const score = compute.final_score ?? 0;
+  const sectionScore = compute.section_score ?? 0;
+  const keywordScore = compute.keyword_score ?? 0;
+  const actionScore = compute.action_score ?? 0;
+  const metricScore = compute.metric_score ?? 0;
+  const lengthScore = compute.length_score ?? 0;
 
-  // Update score circle widget
-  const root = document.getElementById("score-widget-root");
-  root.dataset.score = data.final_score;
+  // Show result containers
+  document.getElementById("score-card").style.display = "block";
+  document.getElementById("charts-container").style.display = "grid";
+  document.getElementById("tabs-container").style.display = "block";
+  document.getElementById("system-info-container").style.display = "block";
 
-  // Re-render React widget
-  const mountNode = document.getElementById("score-widget");
-  mountNode.innerHTML = ""; // clear old
-  if (window.React && window.ReactDOM) {
-    const ScoreWidget = window.ScoreWidget;
-    const ReactDOM = window.ReactDOM;
-    ReactDOM.createRoot(mountNode).render(
-      React.createElement(window.ScoreWidget, { value: data.final_score })
-    );
+  // Add to history
+  analysisHistory.push({ final_score: score, timestamp: new Date().toLocaleTimeString() });
+  if (analysisHistory.length > 10) analysisHistory.shift();
+
+  // Update top hero
+  const lastScoreEl = document.getElementById("last-score");
+  if (lastScoreEl) lastScoreEl.textContent = `${score.toFixed(1)} / 100`;
+
+  const runStatus = document.getElementById("run-status");
+  if (runStatus) {
+    runStatus.innerHTML = `
+      <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+      <span>Last run completed</span>
+    `;
   }
 
+  const lastStatus = document.getElementById("last-status");
+  if (lastStatus) lastStatus.textContent = "Completed";
+
+  const sysBullets = document.getElementById("sys-bullets");
+  if (sysBullets) sysBullets.textContent = bulletsCount;
+
+  const sysWeak = document.getElementById("sys-weak");
+  if (sysWeak) sysWeak.textContent = weakPhrases.length;
+
+  const sysFile = document.getElementById("sys-file");
+  if (sysFile) sysFile.textContent = data.file_out || "—";
+
+  // Handle download button
+  const downloadContainer = document.getElementById("download-btn-container");
+  const downloadBtn = document.getElementById("download-resume-btn");
+
+  if (data.file_out) {
+    downloadContainer.style.display = "block";
+    
+    // Clear previous content and add new link
+    downloadBtn.innerHTML = `
+<a 
+  href="media/${data.file_out}" 
+  download 
+  class="inline-flex items-center justify-center gap-2 w-full text-white no-underline text-center"
+>
+  <span>Download Highlighted Resume</span>
+</a>
+
+    `;
+    
+    // Fix the link styling
+    const link = downloadBtn.querySelector('a');
+    link.style.display = 'inline-flex';
+    link.style.alignItems = 'center';
+    link.style.gap = '0.5rem';
+  } else {
+    downloadContainer.style.display = "none";
+  }
+
+
+  // Update main score display
+  const mainScore = document.getElementById("main-score");
+  if (mainScore) {
+    mainScore.textContent = score.toFixed(1);
+    mainScore.style.color = getScoreColor(score);
+  }
+
+  // Update status badge
+  const statusEl = document.getElementById("score-status");
+  if (statusEl) {
+    const status = getScoreStatus(score);
+    statusEl.className = `inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${status.bg} ${status.border} border ${status.text_color}`;
+    statusEl.textContent = status.text;
+  }
+
+  // Update indicators
+  updateIndicators({ section_score: sectionScore, keyword_score: keywordScore,
+                     action_score: actionScore, metric_score: metricScore, length_score: lengthScore });
+
   // Fill score fields
-  document.getElementById("score_sections").textContent = data.section_score + "%";
-  document.getElementById("score_keywords").textContent = data.keyword_score + "%";
-  document.getElementById("score_action").textContent = data.action_score + "%";
-  document.getElementById("score_metrics").textContent = data.metric_score + "%";
-  document.getElementById("score_length").textContent = data.length_score + "%";
-  document.getElementById("score_words").textContent = data.word_count;
+  const setText = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+
+  setText("score_sections", `${sectionScore.toFixed(1)}%`);
+  setText("score_keywords", `${keywordScore.toFixed(1)}%`);
+  setText("score_action", `${actionScore.toFixed(1)}%`);
+  setText("score_metrics", `${metricScore.toFixed(1)}%`);
+  setText("score_length", `${lengthScore.toFixed(1)}%`);
+  setText("score_words", wordCount);
+
+  // Initialize all charts
+  initGaugeChart(score);
+  initRadarChart({ section_score: sectionScore, keyword_score: keywordScore, 
+                   action_score: actionScore, metric_score: metricScore, length_score: lengthScore });
+  initBarChart({ section_score: sectionScore, keyword_score: keywordScore,
+                 action_score: actionScore, metric_score: metricScore, length_score: lengthScore });
+  initLineChart();
+  initDoughnutChart(score);
+  initStackedBarChart({ section_score: sectionScore, keyword_score: keywordScore,
+                        action_score: actionScore, metric_score: metricScore, length_score: lengthScore });
 
   // Suggestions
   const sug = document.getElementById("suggestions-list");
-  sug.innerHTML = "";
-  data.suggestions.forEach(s => {
-    const li = document.createElement("li");
-    li.className = "flex gap-2 text-xs";
-    li.innerHTML = `<span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-brand-500"></span>${s}`;
-    sug.appendChild(li);
-  });
+  if (sug) {
+    sug.innerHTML = "";
+    if (suggestions.length === 0) {
+      const li = document.createElement("li");
+      li.className = "text-xs text-slate-500";
+      li.textContent = "No suggestions were generated for this run.";
+      sug.appendChild(li);
+    } else {
+      suggestions.forEach(s => {
+        const li = document.createElement("li");
+        li.className = "flex gap-2 text-xs";
+        li.innerHTML = `<span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-brand-500"></span><span>${s}</span>`;
+        sug.appendChild(li);
+      });
+    }
+  }
 
-  // Weak phrases
-  const weak = document.getElementById("weak-phrases");
-  weak.innerHTML = "";
-  data.weak_phrases.forEach(w => {
-    const tag = document.createElement("span");
-    tag.className =
-      "inline-flex items-center px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700";
-    tag.textContent = w.phrase;
-    weak.appendChild(tag);
-  });
+  // Detected sections
+  const sectionsWrap = document.getElementById("detected-sections");
+  if (sectionsWrap) {
+    sectionsWrap.innerHTML = "";
+    const entries = Object.entries(sectionFound);
+    if (entries.length === 0) {
+      const span = document.createElement("span");
+      span.className = "text-slate-500";
+      span.textContent = "No section information was returned by the model.";
+      sectionsWrap.appendChild(span);
+    } else {
+      entries.forEach(([name, present]) => {
+        const chip = document.createElement("span");
+        chip.className =
+          "inline-flex items-center px-2 py-1 rounded-full text-[11px] border";
+        if (present) {
+          chip.classList.add("bg-emerald-50", "border-emerald-200", "text-emerald-700");
+        } else {
+          chip.classList.add("bg-red-50", "border-red-200", "text-red-700", "line-through");
+        }
+        chip.textContent = name;
+        sectionsWrap.appendChild(chip);
+      });
+    }
+  }
 
   // Bullets
   const bulletsContainer = document.getElementById("bullets-list");
-  bulletsContainer.innerHTML = "";
-  data.bullets.forEach(b => {
-    const li = document.createElement("li");
-    li.className = "px-3 py-2 text-xs border-b border-slate-200";
-    li.textContent = b;
-    bulletsContainer.appendChild(li);
-  });
+  if (bulletsContainer) {
+    bulletsContainer.innerHTML = "";
+    if (bullets.length === 0) {
+      const li = document.createElement("li");
+      li.className = "px-3 py-2 text-xs text-slate-500";
+      li.textContent = "No bullet points were extracted.";
+      bulletsContainer.appendChild(li);
+    } else {
+      bullets.forEach(b => {
+        const li = document.createElement("li");
+        li.className = "px-3 py-2 text-xs";
+        li.textContent = b;
+        bulletsContainer.appendChild(li);
+      });
+    }
+  }
 
-  // Switch UI to show the result pane
-  document.querySelector("[data-tab-trigger='scores']").click();
+  const bulletsCountEl = document.getElementById("bullets-count");
+  if (bulletsCountEl) bulletsCountEl.textContent = bulletsCount;
+
+  // Weak phrases
+  const weakWrapper = document.getElementById("weak-phrases-wrapper");
+  const weakEl = document.getElementById("weak-phrases");
+  if (weakWrapper && weakEl) {
+    weakEl.innerHTML = "";
+    if (weakPhrases.length === 0) {
+      weakWrapper.style.display = "none";
+    } else {
+      weakWrapper.style.display = "block";
+      weakPhrases.forEach(w => {
+        const phrase = typeof w === "string" ? w : w.phrase;
+        const tag = document.createElement("span");
+        tag.className =
+          "inline-flex items-center px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700";
+        tag.textContent = phrase;
+        weakEl.appendChild(tag);
+      });
+    }
+  }
+
+  // Tabs: switch to suggestions tab after render
+  const suggestionsTrigger = document.querySelector("[data-tab-trigger='suggestions']");
+  if (suggestionsTrigger) suggestionsTrigger.click();
 }
-
 
 // --------- Portal Tabs ---------
 (function() {
@@ -661,10 +1252,8 @@ function renderResults(data) {
       btn.addEventListener("click", () => activate(btn.dataset.tabTrigger));
     });
 
-    activate("scores");
+    activate("suggestions");
   });
 })();
-
 </script>
-
 {% endblock %}
