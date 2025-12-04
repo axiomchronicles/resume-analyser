@@ -1,58 +1,188 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, asdict
+from typing import Dict, List, Optional, Tuple, Any
+
 from helpers import (
     clean_text,
     extract_bullets,
     coverage_score,
     keyword_match_score,
     starts_with_action_verb,
-    contains_metric
+    contains_metric,
 )
+@dataclass(frozen=True)
+class ATSWeights:
+    section: float = 0.20
+    keyword: float = 0.30
+    action: float = 0.20
+    metric: float = 0.15
+    length: float = 0.15
 
-from typing import Dict
+    def normalized(self) -> "ATSWeights":
+        total = self.section + self.keyword + self.action + self.metric + self.length
+        if total <= 0:
+            equal = 1.0 / 5
+            return ATSWeights(equal, equal, equal, equal, equal)
+        return ATSWeights(
+            section=self.section / total,
+            keyword=self.keyword / total,
+            action=self.action / total,
+            metric=self.metric / total,
+            length=self.length / total,
+        )
 
-def compute_ats_scores(resume_text: str, jd_text: str = "") -> Dict:
-    resume_text = clean_text(resume_text)
-    bullets = extract_bullets(resume_text)
 
-    section_score, section_found = coverage_score(resume_text)
-    kw_score = keyword_match_score(resume_text, jd_text)
+@dataclass(frozen=True)
+class LengthConfig:
+    min_wc: int = 200
+    optimal_min_wc: int = 200
+    optimal_max_wc: int = 800
+    acceptable_max_wc: int = 1200
 
-    action_score = (
-        sum(starts_with_action_verb(b) for b in bullets) / len(bullets)
-        if bullets else 0.3
+    too_short_score: float = 0.30
+    optimal_score: float = 1.00
+    slightly_long_score: float = 0.70
+    too_long_score: float = 0.40
+
+
+@dataclass(frozen=True)
+class BulletFallbackConfig:
+    action_score_no_bullets: float = 0.30
+    metric_score_no_bullets: float = 0.20
+
+
+@dataclass(frozen=True)
+class ATSConfig:
+    weights: ATSWeights = ATSWeights()
+    length: LengthConfig = LengthConfig()
+    bullet_fallbacks: BulletFallbackConfig = BulletFallbackConfig()
+    max_final_score: float = 100.0
+
+
+@dataclass
+class ATSScores:
+    final_score: float
+    section_score: float
+    keyword_score: float
+    action_score: float
+    metric_score: float
+    length_score: float
+    word_count: int
+    bullets_count: int
+    section_found: Dict[str, bool]
+    bullets: List[str]
+
+    explanation: Optional[Dict[str, Any]] = None
+
+    def to_dict(self, include_explanation: bool = True) -> Dict[str, Any]:
+        data = asdict(self)
+        if not include_explanation:
+            data.pop("explanation", None)
+        return data
+
+
+def _compute_length_score(word_count: int, cfg: LengthConfig) -> float:
+    if word_count < cfg.min_wc:
+        return cfg.too_short_score
+    if cfg.optimal_min_wc <= word_count <= cfg.optimal_max_wc:
+        return cfg.optimal_score
+    if cfg.optimal_max_wc < word_count <= cfg.acceptable_max_wc:
+        return cfg.slightly_long_score
+    return cfg.too_long_score
+
+
+def _compute_bullet_based_scores(
+    bullets: List[str],
+    fallbacks: BulletFallbackConfig,
+) -> Tuple[float, float, Dict[str, Any]]:
+    if not bullets:
+        explanation = {
+            "reason": "no_bullets_found",
+            "action_score_fallback": fallbacks.action_score_no_bullets,
+            "metric_score_fallback": fallbacks.metric_score_no_bullets,
+        }
+        return fallbacks.action_score_no_bullets, fallbacks.metric_score_no_bullets, explanation
+
+    total_bullets = len(bullets)
+
+    action_flags = [bool(starts_with_action_verb(b)) for b in bullets]
+    metric_flags = [bool(contains_metric(b)) for b in bullets]
+
+    action_score = sum(action_flags) / total_bullets
+    metric_score = sum(metric_flags) / total_bullets
+
+    explanation = {
+        "total_bullets": total_bullets,
+        "action_bullets": sum(action_flags),
+        "metric_bullets": sum(metric_flags),
+        "action_flags": action_flags,  
+        "metric_flags": metric_flags,  
+    }
+
+    return action_score, metric_score, explanation
+
+
+def compute_ats_scores(
+    resume_text: str,
+    jd_text: str = "",
+    config: Optional[ATSConfig] = None,
+    include_explanation: bool = False,
+) -> Dict:
+    cfg = config or ATSConfig()
+    weights = cfg.weights.normalized()
+
+    cleaned_resume = clean_text(resume_text or "")
+    bullets = extract_bullets(cleaned_resume) or []
+
+    word_count = len(cleaned_resume.split())
+
+    section_score_raw, section_found = coverage_score(cleaned_resume)
+    keyword_score_raw = keyword_match_score(cleaned_resume, jd_text or "")
+
+    action_score_raw, metric_score_raw, bullets_explanation = _compute_bullet_based_scores(
+        bullets,
+        cfg.bullet_fallbacks,
     )
+    length_score_raw = _compute_length_score(word_count, cfg.length)
 
-    metric_score = (
-        sum(contains_metric(b) for b in bullets) / len(bullets)
-        if bullets else 0.2
-    )
-
-    wc = len(resume_text.split())
-    if wc < 200:
-        length_score = 0.3
-    elif wc <= 800:
-        length_score = 1.0
-    elif wc <= 1200:
-        length_score = 0.7
-    else:
-        length_score = 0.4
-
-    final = (
-        section_score * 0.2 +
-        kw_score * 0.3 +
-        action_score * 0.2 +
-        metric_score * 0.15 +
-        length_score * 0.15
+    final_raw = (
+        section_score_raw * weights.section +
+        keyword_score_raw * weights.keyword +
+        action_score_raw * weights.action +
+        metric_score_raw * weights.metric +
+        length_score_raw * weights.length
     ) * 100
 
-    return {
-        "final_score": round(final, 1),
-        "section_score": round(section_score * 100, 1),
-        "keyword_score": round(kw_score * 100, 1),
-        "action_score": round(action_score * 100, 1),
-        "metric_score": round(metric_score * 100, 1),
-        "length_score": round(length_score * 100, 1),
-        "word_count": wc,
-        "bullets_count": len(bullets),
-        "section_found": section_found,
-        "bullets": bullets,
-    }
+    final_capped = min(final_raw, cfg.max_final_score)
+
+    explanation: Optional[Dict[str, Any]] = None
+    if include_explanation:
+        explanation = {
+            "weights_used": asdict(weights),
+            "raw_scores": {
+                "section_score_raw": section_score_raw,
+                "keyword_score_raw": keyword_score_raw,
+                "action_score_raw": action_score_raw,
+                "metric_score_raw": metric_score_raw,
+                "length_score_raw": length_score_raw,
+            },
+            "length_config": asdict(cfg.length),
+            "bullet_analysis": bullets_explanation,
+        }
+
+    scores = ATSScores(
+        final_score=round(final_capped, 1),
+        section_score=round(section_score_raw * 100, 1),
+        keyword_score=round(keyword_score_raw * 100, 1),
+        action_score=round(action_score_raw * 100, 1),
+        metric_score=round(metric_score_raw * 100, 1),
+        length_score=round(length_score_raw * 100, 1),
+        word_count=word_count,
+        bullets_count=len(bullets),
+        section_found=section_found,
+        bullets=bullets,
+        explanation=explanation,
+    )
+
+    return scores.to_dict(include_explanation=include_explanation)
