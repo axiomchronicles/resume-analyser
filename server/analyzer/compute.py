@@ -173,7 +173,7 @@ def compute_ats_scores(
 
     final_raw = (
         section_score_raw * weights.section +
-        keyword_score_raw * weights.keyword +
+        min(max(keyword_score_raw * 3, 0), 1) * weights.keyword +
         action_score_raw * weights.action +
         metric_score_raw * weights.metric +
         length_score_raw * weights.length
