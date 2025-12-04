@@ -176,7 +176,7 @@ def highlight_pdf(
 
                 rects = page.search_for(
                     phrase,
-                    flags=fitz.TEXT_IGNORECASE | fitz.TEXT_DEHYPHENATE,
+                    flags=fitz.TEXT_DEHYPHENATE,
                 )
 
                 if not rects:
