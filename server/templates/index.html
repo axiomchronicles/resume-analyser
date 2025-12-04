@@ -1,0 +1,670 @@
+{% extends "base.html" %}
+
+{% block title %}Resume e-Filing 2.0 · Analyzer{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+  <!-- Hero + Quick actions -->
+  <div class="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-5 items-stretch mb-6">
+    <!-- Hero card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-[11px] text-slate-500 mb-1">
+            <span class="uppercase tracking-wide font-semibold text-brand-700">Resume e-Filing</span>
+            <span>·</span>
+            <span>Central Resume Analysis Portal</span>
+          </div>
+          <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
+            File your resume, get ATS-style clearance
+          </h1>
+          <p class="text-sm text-slate-600 max-w-xl">
+            Upload or paste your resume, optionally provide a job description, and get an ATS-style
+            score with ML-powered insights and concrete suggestions – all in one place.
+          </p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="inline-flex items-center gap-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200 px-3 py-1 text-[11px]">
+              <span class="h-1.5 w-1.5 rounded-full bg-brand-500"></span>
+              ML scoring enabled
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 text-[11px]">
+              No permanent storage
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px]">
+              PDF + raw text supported
+            </span>
+          </div>
+        </div>
+        <div class="shrink-0 bg-brand-50 border border-brand-100 rounded-2xl px-4 py-3 text-xs text-slate-700 w-full md:w-60">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-slate-800">Last analysis</span>
+            {% if analysis %}
+              <span class="text-brand-700 font-semibold">{{ analysis.final_score }} / 100</span>
+            {% else %}
+              <span class="text-slate-500">No runs yet</span>
+            {% endif %}
+          </div>
+          <p class="text-[11px] mb-2 leading-relaxed">
+            Scores combine structure, keyword alignment, action verbs, metrics, and length using a trained ATS model.
+          </p>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-500">Model version</span>
+            <span class="font-medium text-slate-800">{{ ml_model_version or "ATS-Linear+TFIDF v1.0" }}</span>
+          </div>
+          <div class="mt-2 flex justify-end">
+            <a href="#analyze"
+               class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 hover:text-brand-800">
+              Start new analysis
+              <span>↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions / portal tiles -->
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div class="bg-white border border-slate-200 rounded-xl shadow-card/40 p-4 flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-slate-700">Analyze Resume</div>
+          <p class="text-[11px] text-slate-500">
+            Upload a fresh resume and optional job description and view ATS results immediately.
+          </p>
+        </div>
+        <a href="#analyze"
+           class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800">
+          Go to analyzer
+          <span>→</span>
+        </a>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl shadow-card/40 p-4 flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-slate-700">Synthetic Dataset</div>
+          <p class="text-[11px] text-slate-500">
+            Generate synthetic resumes with scores to train or retrain the ATS ML model.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+          onclick="alert('Hook this button to your synthetic dataset generator route.')"
+        >
+          Open generator
+          <span>→</span>
+        </button>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl shadow-card/40 p-4 flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-slate-700">ML Model Status</div>
+          <p class="text-[11px] text-slate-500">
+            Check which scoring model is active and when it was last trained or updated.
+          </p>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Current model:</span>
+          <span class="font-medium text-slate-700">
+            {{ ml_model_version or "v1.0.0" }}
+          </span>
+        </div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl shadow-card/40 p-4 flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-slate-700">API / Integration</div>
+          <p class="text-[11px] text-slate-500">
+            Use the analyzer programmatically from your own apps or internal portals.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+          onclick="alert('Link this to your API docs / Swagger UI.')"
+        >
+          View API docs
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analyzer form + results -->
+  <div id="analyze" class="grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)] gap-6 items-start">
+    <!-- Left: Form -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900">Resume Submission</h2>
+          <p class="text-xs text-slate-500">
+            Paste your resume text or upload a PDF. For best results, use a text-based resume (no image scans).
+          </p>
+        </div>
+        <div class="hidden md:flex flex-col items-end text-[11px] text-slate-500">
+          <span>Status:</span>
+          {% if analysis %}
+            <span class="inline-flex items-center gap-1 text-emerald-600">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              Last run completed
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 text-slate-500">
+              <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+              Awaiting first run
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <form
+        enctype="multipart/form-data"
+        class="space-y-4"
+        id="analysis-form"
+      >
+        {% if csrf_token %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <!-- Resume text -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-slate-700">
+            Resume Text <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            name="resume_text"
+            rows="10"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
+            placeholder="Paste your resume here..."
+          >{{ request.form.resume_text or "" }}</textarea>
+          <p class="text-[11px] text-slate-500">
+            If both text and file are provided, backend can choose which to prioritize (e.g. file text extraction).
+          </p>
+        </div>
+
+        <!-- File upload + drag & drop -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-slate-700">
+            Or Upload PDF (drag & drop or click)
+          </label>
+          <div
+            id="dropzone"
+            class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 cursor-pointer transition-colors"
+          >
+            <div class="text-xs text-slate-600 pointer-events-none">
+              <div class="font-medium">Drop PDF here or click to browse</div>
+              <div id="file-name" class="text-[11px] text-slate-500 mt-0.5">
+                {% if uploaded_filename %}
+                  Selected: {{ uploaded_filename }}
+                {% else %}
+                  No file selected
+                {% endif %}
+              </div>
+            </div>
+            <div class="shrink-0 inline-flex items-center gap-1 text-[11px] text-brand-700 pointer-events-none">
+              Browse files
+              <span>📄</span>
+            </div>
+            <input
+              id="resume_file"
+              name="resume_file"
+              type="file"
+              accept=".pdf"
+              class="absolute inset-0 opacity-0 cursor-pointer"
+            >
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Only text-based PDFs are supported for accurate extraction. Max size depends on server config.
+          </p>
+        </div>
+
+        <!-- Job description -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-slate-700">
+            Job Description (optional, improves keyword scoring)
+          </label>
+          <textarea
+            name="jd_text"
+            rows="6"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-y"
+            placeholder="Paste the job description here if you want job-specific ATS scoring..."
+          >{{ request.form.jd_text or "" }}</textarea>
+        </div>
+
+        <!-- Advanced options (placeholder for future toggles) -->
+        <details class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <summary class="cursor-pointer select-none text-slate-700 font-medium">
+            Advanced options
+          </summary>
+          <div class="mt-2 space-y-1">
+            <p class="text-[11px]">
+              This section can be wired to options like: “Use ML model only”, “Use rule-based backup”, or “Show debug features”.
+            </p>
+          </div>
+        </details>
+
+        {% if error %}
+          <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {{ error }}
+          </div>
+        {% endif %}
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          <p class="text-[11px] text-slate-500">
+            The analysis runs on the server and results are shown instantly. Documents are not stored.
+          </p>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 text-white text-sm font-medium px-5 py-2 shadow-sm hover:bg-brand-700 active:scale-[0.98] transition-transform"
+          >
+            Run Analysis
+            <span>↗</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right: Results, tabs, score widget -->
+    <div class="space-y-4" id="ml-insights">
+      <!-- Score + tabs container -->
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-5 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-900">ATS Score Overview</h2>
+            <p class="text-xs text-slate-500">
+              Estimated ATS-style compatibility score. Higher is better (0–100 scale).
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-slate-500">
+            <span>Model:</span>
+            <span class="font-medium text-slate-800">{{ ml_model_version or "ATS-Linear+TFIDF v1.0" }}</span>
+          </div>
+        </div>
+
+        <!-- React + Framer Motion widget mount -->
+        <div
+          id="score-widget-root"
+          data-score="{{ analysis.final_score if analysis else 0 }}"
+          class="border border-slate-200 rounded-xl bg-slate-50 px-3 py-3 mb-4"
+        >
+          <div id="score-widget" class="h-28 flex items-center justify-center"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-slate-200 mb-3 flex flex-wrap text-xs font-medium" data-tabs>
+          <button
+            type="button"
+            class="px-3 py-2 border-b-2 border-brand-600 text-brand-700"
+            data-tab-trigger="scores"
+          >
+            Scores
+          </button>
+          <button
+            type="button"
+            class="px-3 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+            data-tab-trigger="suggestions"
+          >
+            Suggestions
+          </button>
+          <button
+            type="button"
+            class="px-3 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+            data-tab-trigger="sections"
+          >
+            Sections & Bullets
+          </button>
+          <button
+            type="button"
+            class="px-3 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+            data-tab-trigger="ml"
+          >
+            ML Details
+          </button>
+        </div>
+
+        <!-- Tab panels -->
+        <div class="space-y-3">
+          <!-- Scores -->
+          <div data-tab-panel="scores">
+            {% if analysis %}
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Sections</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.section_score }}%</div>
+                </div>
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Keywords</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.keyword_score }}%</div>
+                </div>
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Action Verbs</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.action_score }}%</div>
+                </div>
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Metrics</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.metric_score }}%</div>
+                </div>
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Length</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.length_score }}%</div>
+                </div>
+                <div class="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                  <div class="text-slate-500">Word Count</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ analysis.word_count }}</div>
+                </div>
+              </div>
+            {% else %}
+              <p class="text-xs text-slate-500">
+                Run an analysis to see detailed scores here.
+              </p>
+            {% endif %}
+          </div>
+
+          <!-- Suggestions -->
+          <div data-tab-panel="suggestions" class="hidden">
+            {% if suggestions %}
+              <ul class="space-y-2 text-xs">
+                {% for suggestion in suggestions %}
+                  <li class="flex gap-2">
+                    <span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-brand-500"></span>
+                    <span>{{ suggestion }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-xs text-slate-500">
+                Suggestions will appear here after running an analysis.
+              </p>
+            {% endif %}
+          </div>
+
+          <!-- Sections & Bullets -->
+          <div data-tab-panel="sections" class="hidden">
+            {% if analysis %}
+              <div class="mb-3">
+                <div class="text-xs font-semibold text-slate-700 mb-1">Detected Sections</div>
+                <div class="flex flex-wrap gap-1">
+                  {% for name, present in analysis.section_found.items() %}
+                    {% if present %}
+                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-700">
+                        {{ name }}
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-red-50 border border-red-200 text-[11px] text-red-700 line-through">
+                        {{ name }}
+                      </span>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="text-xs font-semibold text-slate-700 mb-1">
+                Extracted Bullets ({{ analysis.bullets_count }})
+              </div>
+              <div class="max-h-56 overflow-auto pr-1 border border-slate-200 rounded-xl bg-slate-50">
+                <ul class="divide-y divide-slate-200 text-xs">
+                  {% for bullet in analysis.bullets %}
+                    <li class="px-3 py-2">
+                      {{ bullet }}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+
+              {% if weak_phrases %}
+                <div class="mt-3">
+                  <div class="text-xs font-semibold text-slate-700 mb-1">Weak Phrases</div>
+                  <div class="flex flex-wrap gap-1">
+                    {% for w in weak_phrases %}
+                      <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700">
+                        {{ w.phrase }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            {% else %}
+              <p class="text-xs text-slate-500">
+                Run an analysis to view sections and extracted bullet points.
+              </p>
+            {% endif %}
+          </div>
+
+          <!-- ML Details -->
+          <div data-tab-panel="ml" class="hidden text-xs text-slate-600">
+            <p class="mb-2">
+              The ATS score is computed using a combination of engineered features and a machine learning model.
+            </p>
+            <ul class="list-disc list-inside space-y-1">
+              <li>Features include section coverage, keyword overlap with job description, action verbs, measurable metrics, and resume length.</li>
+              <li>A scikit-learn pipeline combines TF-IDF text features with numeric features.</li>
+              <li>The final model outputs a score on a 0–100 scale, which is then rounded for display.</li>
+            </ul>
+            <p class="mt-2 text-[11px] text-slate-500">
+              You can customize this model by retraining it on your own labeled resumes or synthetic data.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- System info / debug -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 text-[11px] text-slate-600">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-semibold text-slate-800">System Info</span>
+          <span class="text-slate-400">Developer view</span>
+        </div>
+        <p>Last analysis status:
+          {% if analysis %}
+            <span class="text-emerald-600 font-medium">Completed</span>
+          {% else %}
+            <span class="text-slate-500">No run yet</span>
+          {% endif %}
+        </p>
+        {% if analysis %}
+          <p>Bullets parsed: <span class="font-medium">{{ analysis.bullets_count }}</span></p>
+          <p>Weak phrases flagged:
+            <span class="font-medium">{{ weak_phrases|length if weak_phrases else 0 }}</span>
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// -------- Drag & Drop + File Input --------
+(function() {
+  const fileInput = document.getElementById("resume_file");
+  const fileNameSpan = document.getElementById("file-name");
+  const dropzone = document.getElementById("dropzone");
+
+  if (!fileInput || !fileNameSpan || !dropzone) return;
+
+  function setFileName(file) {
+    fileNameSpan.textContent = file ? "Selected: " + file.name : "No file selected";
+  }
+
+  // When user chooses file manually
+  fileInput.addEventListener("change", () => {
+    setFileName(fileInput.files[0] || null);
+  });
+
+  // Drag & Drop visual
+  function highlight() {
+    dropzone.classList.add("ring-2", "ring-brand-500", "bg-slate-100");
+  }
+  function unhighlight() {
+    dropzone.classList.remove("ring-2", "ring-brand-500", "bg-slate-100");
+  }
+
+  ["dragenter", "dragover"].forEach(evt =>
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      highlight();
+    })
+  );
+
+  ["dragleave", "dragend"].forEach(evt =>
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      unhighlight();
+    })
+  );
+
+  dropzone.addEventListener("drop", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    unhighlight();
+    const files = e.dataTransfer.files;
+
+    if (files && files.length > 0) {
+      fileInput.files = files;
+      setFileName(files[0]);
+    }
+  });
+})();
+
+
+// --------- Loading Spinner Utility ---------
+function showLoader() {
+  const spinner = document.getElementById("loading-overlay");
+  spinner.classList.remove("hidden");
+}
+function hideLoader() {
+  const spinner = document.getElementById("loading-overlay");
+  spinner.classList.add("hidden");
+}
+
+
+// --------- API Submission (AJAX) ---------
+(function () {
+  const form = document.getElementById("analysis-form");
+  if (!form) return;
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault(); // Prevent page reload
+    showLoader();
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        body: formData
+      });
+
+      hideLoader();
+
+      if (!response.ok) {
+        alert("Server returned an error.");
+        return;
+      }
+
+      const data = await response.json();
+      renderResults(data);
+
+    } catch (err) {
+      hideLoader();
+      alert("Something went wrong. Check your backend or network.");
+      console.error(err);
+    }
+  });
+})();
+
+
+// --------- Render Results into UI ---------
+function renderResults(data) {
+  // data = { final_score, analysis, suggestions, weak_phrases }
+  console.log("RESULTS:", data);
+
+  // Update score circle widget
+  const root = document.getElementById("score-widget-root");
+  root.dataset.score = data.final_score;
+
+  // Re-render React widget
+  const mountNode = document.getElementById("score-widget");
+  mountNode.innerHTML = ""; // clear old
+  if (window.React && window.ReactDOM) {
+    const ScoreWidget = window.ScoreWidget;
+    const ReactDOM = window.ReactDOM;
+    ReactDOM.createRoot(mountNode).render(
+      React.createElement(window.ScoreWidget, { value: data.final_score })
+    );
+  }
+
+  // Fill score fields
+  document.getElementById("score_sections").textContent = data.section_score + "%";
+  document.getElementById("score_keywords").textContent = data.keyword_score + "%";
+  document.getElementById("score_action").textContent = data.action_score + "%";
+  document.getElementById("score_metrics").textContent = data.metric_score + "%";
+  document.getElementById("score_length").textContent = data.length_score + "%";
+  document.getElementById("score_words").textContent = data.word_count;
+
+  // Suggestions
+  const sug = document.getElementById("suggestions-list");
+  sug.innerHTML = "";
+  data.suggestions.forEach(s => {
+    const li = document.createElement("li");
+    li.className = "flex gap-2 text-xs";
+    li.innerHTML = `<span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-brand-500"></span>${s}`;
+    sug.appendChild(li);
+  });
+
+  // Weak phrases
+  const weak = document.getElementById("weak-phrases");
+  weak.innerHTML = "";
+  data.weak_phrases.forEach(w => {
+    const tag = document.createElement("span");
+    tag.className =
+      "inline-flex items-center px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700";
+    tag.textContent = w.phrase;
+    weak.appendChild(tag);
+  });
+
+  // Bullets
+  const bulletsContainer = document.getElementById("bullets-list");
+  bulletsContainer.innerHTML = "";
+  data.bullets.forEach(b => {
+    const li = document.createElement("li");
+    li.className = "px-3 py-2 text-xs border-b border-slate-200";
+    li.textContent = b;
+    bulletsContainer.appendChild(li);
+  });
+
+  // Switch UI to show the result pane
+  document.querySelector("[data-tab-trigger='scores']").click();
+}
+
+
+// --------- Portal Tabs ---------
+(function() {
+  document.querySelectorAll("[data-tabs]").forEach(tabRoot => {
+    const triggers = tabRoot.querySelectorAll("[data-tab-trigger]");
+    const panels = tabRoot.parentElement.querySelectorAll("[data-tab-panel]");
+
+    function activate(name) {
+      triggers.forEach(btn => {
+        const active = btn.dataset.tabTrigger === name;
+        btn.classList.toggle("border-brand-600", active);
+        btn.classList.toggle("text-brand-700", active);
+        btn.classList.toggle("border-transparent", !active);
+        btn.classList.toggle("text-slate-500", !active);
+      });
+
+      panels.forEach(panel => {
+        const show = panel.dataset.tabPanel === name;
+        panel.classList.toggle("hidden", !show);
+      });
+    }
+
+    triggers.forEach(btn => {
+      btn.addEventListener("click", () => activate(btn.dataset.tabTrigger));
+    });
+
+    activate("scores");
+  });
+})();
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{
+    "$compression": [
+        "9ddac6fc-0dee-4250-b0bf-4e1e7a65445d.gzip",
+        "25cae451-64e8-4a1a-93c6-d7ccd265db76.gzip",
+        "bd1a9e45-7368-4052-bf2f-ea0ce0df591e.gzip",
+        "490db494-0278-4ec3-bd1a-48129bb89deb.gzip",
+        "522204f9-dc5d-4cb3-86f5-ec177a156c1e.gzip",
+        "26a7e8e8-ad11-4fa8-b4e9-23a234a1f89b.gzip",
+        "4a5290fd-36f7-4d42-875f-929a671e37e5.gzip",
+        "e309ca53-14dd-4c74-801a-fcbadfaad2d8.gzip",
+        "cd1b5600-0742-41c8-964b-5998463f9a12.gzip",
+        "41fe205c-fcc8-48a7-86b8-07244e85d728.gzip",
+        "a244a616-8457-48b4-a19b-b69603ed24f1.gzip",
+        "fddd1203-f32e-448a-9d77-e80c6cb8ca0e.gzip",
+        "ef10f66b-3e69-493f-9ba5-a77fcdcf4b31.gzip",
+        "dd2b03c2-c258-47a7-a9d8-cd86f4535b95.gzip",
+        "bbcd38a6-46fc-4140-9785-13f3e4cc6e6f.gzip",
+        "cea7bf58-7eea-4308-8fa0-209b49de5d1f.gzip",
+        "1f4a159c-a4ff-4c69-bd21-9a51e431cfb1.gzip",
+        "11ae055d-aefe-4930-80e6-d6f03caecb62.gzip",
+        "06ea516b-9cfe-458d-bb69-2706c4c10a94.gzip",
+        "a5eaf6c2-4dca-4326-89d8-fc8e1d7149f3.gzip",
+        "628a5a68-43ad-40f3-9dee-3948e1cd1ac3.gzip",
+        "016337d6-4029-4ed6-af4f-752bd4b22a39.gzip",
+        "11ca9e2d-8936-4ede-a1ec-18ee42b11247.gzip",
+        "2266916d-1632-49c3-9f66-77cbe58b85be.gzip",
+        "496989af-c89d-4da8-ae8e-ef54575146b1.gzip"
+    ],
+    "$session": [
+        {
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "$path": [
+                ".aquilify/cache/session/memory/config.json"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,74 @@
+{
+    "$session": [
+        {
+            "session_id": "BmpUWzok4BMgXCNZHk2MbIJIOO0J-kWtWaWAwNcdC5O05_-nBUC5EzJfi3oYAbbav5kr2KCNhf5JoNH9EFxUKQ==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:36:41"
+        },
+        {
+            "session_id": "fVnJNXXCXinnM9Dwawco2WUk3f87JR-Izogx1OasGBQQOQKlgMbp4wcce7GxzXGyFmVD8fdOd_7HW_RO9bZTmQ==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:37:58"
+        },
+        {
+            "session_id": "oZEhMEKWTNFkH0xfUDwoKErMmjEydugpt-hh0-Sjho8ARyzQofP2mmbPCEzrqOpnl9xiYLtiLTvuPmkFcnbnNg==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:38:35"
+        },
+        {
+            "session_id": "dj2IW018CSDN9kSRXDsRubR16kPK_vy8RIV65X3hO4LN9Dvdn7TrSPtVzNugsaryp5yw_2RBce3M3ufqrUbotw==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:39:56"
+        },
+        {
+            "session_id": "upujjeCeAjFLNIw2vOJetudVVKuDsEXBaZ6e8RUZUzHYxE5FyIHqb1MZvXXQxf5LKiDaYIiEcDJyHR_pdew_zg==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:41:17"
+        },
+        {
+            "session_id": "URmymiJR5UStbPZz0jyBLTcNB2iI3U1-z0KE96qvLoiFbDjVxAaZB_X9KMpa-zy6Xf4O_s-r1hoaTY6vZrBOaQ==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:42:47"
+        },
+        {
+            "session_id": "JC7KdM9jJALcpt0DSj59_MSMHnRiU5TALHsw3WLPUv-27KsAxcfCCxptFhxSDCzKKT2MHjhvSPv2ccPXitqRxA==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:44:00"
+        },
+        {
+            "session_id": "DNNNXvuGDVQaSHhkEW249FKUvjCLXu3fnT35E0OPdyq39IHkDoZRirQTqeQ8so35lBadhC26q8OD1S60Pk0nRw==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 19:47:14"
+        },
+        {
+            "session_id": "LkDzR8g9tvZ7ldzaSHGrg92G_6pmlh-TZx_qx-FVwJVnGcMxTlSGn9c8IlO_LUgIlg4Erl-0JoGQjaHFjLZWFA==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 21:33:11"
+        },
+        {
+            "session_id": "XtgwfIxC0toKyKfU7E_JrJ0OMNt0uSwm-tdANMyvoejtYttCMtmbYCpDHMxCQw0bIvpFWoNQo3elSuA0Y2Y1FA==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-04 22:45:44"
+        }
+    ]
+}
