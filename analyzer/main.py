@@ -1,15 +1,8 @@
 from utils import extract_texts, highlight_pdf
 from helpers import (
     clean_text,
-    contains_metric,
-    cosine_similarity,
-    coverage_score,
-    extract_bullets,
-    starts_with_action_verb,
-    split_into_sentences,
-    keyword_match_score,
-    weak_phrases
 )
+from compute import compute_ats_scores
 
 from pprint import pprint
 
@@ -20,55 +13,10 @@ def main():
     jd_text = "AI&ML Engineer"
 
     cleaned_text = clean_text(data)
-    # print(cleaned_text)
-    bullets = extract_bullets(cleaned_text)
-    print(bullets)
+    compute = compute_ats_scores(cleaned_text, jd_text)
 
-    section_score, section_found = coverage_score(cleaned_text)
-    kw_score = keyword_match_score(cleaned_text, jd_text)
-
-    action_score = (
-        sum(starts_with_action_verb(b) for b in bullets) / len(bullets)
-        if bullets else 0.3
-    )
-
-    metric_score = (
-        sum(contains_metric(b) for b in bullets) / len(bullets)
-        if bullets else 0.2
-    )
-
-    wc = len(cleaned_text.split())
-    if wc < 200:
-        length_score = 0.3
-    elif wc <= 800:
-        length_score = 1.0
-    elif wc <= 1200:
-        length_score = 0.7
-    else:
-        length_score = 0.4
-
-    final = (
-        section_score * 0.2 +
-        kw_score * 0.3 +
-        action_score * 0.2 +
-        metric_score * 0.15 +
-        length_score * 0.15
-    ) * 100
-
-    highlight_pdf("./functionalsample.pdf", "_higlighted.pdf", weak_phrases(cleaned_text), bullets)
-
-    return {
-        "final_score": round(final, 1),
-        "section_score": round(section_score * 100, 1),
-        "keyword_score": round(kw_score * 100, 1),
-        "action_score": round(action_score * 100, 1),
-        "metric_score": round(metric_score * 100, 1),
-        "length_score": round(length_score * 100, 1),
-        "word_count": wc,
-        "bullets_count": len(bullets),
-        "section_found": section_found,
-        "bullets": bullets,
-    }
+    # print(compute)
+    return compute
 
 if __name__ == "__main__":
     pprint(main())

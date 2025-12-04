@@ -20,7 +20,6 @@ def split_into_sentences(text: str) -> typing.List[str]:
     return [s.strip() for s in sents if s.strip()]
 
 def extract_bullets(text: str) -> typing.List[str]:
-    # Matches: bullet symbol + space + text, until the next bullet or end
     pattern = re.compile(
         r"""
         (?:^| )                # start or space
@@ -64,17 +63,6 @@ def keyword_match_score(resume: str, jd: str) -> float:
     tf = vector.fit_transform([resume, jd])
 
     return float(cosine_similarity(tf[0:1], tf[1:2])[0][0])
-
-
-from dataclasses import dataclass
-
-
-@dataclass
-class WeakPhraseMatch:
-    phrase: str
-    start: int
-    end: int
-    snippet: str
 
 
 def compile_phrase_patterns(phrases):
