@@ -146,6 +146,13 @@
             "cache": true,
             "encryption": "base64",
             "timestamp": "2025-12-05 00:49:15"
+        },
+        {
+            "session_id": "cZEFW2_OanGTSgiVP4IDxFHs7pj6WYBmqHjOLXxZz2JUkWMqTB7KYD91aMVw1VxHG0jwA-tofy8iNcmn45RA6Q==",
+            "backend": "memory",
+            "cache": true,
+            "encryption": "base64",
+            "timestamp": "2025-12-05 01:26:29"
         }
     ]
 }
